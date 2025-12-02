@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 6a90d62de9f9ac29ae46ce5370114810ca731b2ec549a763043bc5a7bd548abf # shrinks to rotations = [Rotation(Right, 19), Rotation(Right, 31)]
+cc 542d8c5b8380ba0cf592dbd095149e47a194d60914bfb6e6a15748743aae67d7 # shrinks to rotations = [Rotation(Right, 24), Rotation(Right, 7), Rotation(Right, 12), Rotation(Right, 26), Rotation(Right, 26), Rotation(Right, 31), Rotation(Right, 7), Rotation(Left, 48), Rotation(Left, 12), Rotation(Right, 27), Rotation(Right, 20), Rotation(Right, 26), Rotation(Right, 40), Rotation(Left, 33), Rotation(Right, 15), Rotation(Right, 39), Rotation(Right, 1), Rotation(Right, 6), Rotation(Right, 36), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1), Rotation(Right, 1)]

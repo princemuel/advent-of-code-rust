@@ -127,3 +127,170 @@ fn main() {
     let elapsed = start.elapsed();
     println!("Elapsed time: {:.4} seconds", elapsed.as_secs_f64());
 }
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+
+    use super::*;
+
+    prop_compose! {
+        fn arb_direction()(b in any::<bool>()) -> Direction {
+            if b { Direction::Left } else { Direction::Right }
+        }
+    }
+
+    prop_compose! {
+        fn arb_rotation()(
+            dir in arb_direction(),
+            dist in 0i32..5000
+        ) -> Rotation {
+            Rotation(dir, dist)
+        }
+    }
+
+    prop_compose! {
+        fn arb_rotation_list()(list in prop::collection::vec(arb_rotation(), 0..200)) -> Vec<Rotation> {
+            list
+        }
+    }
+
+    fn render(rot: &Rotation) -> String {
+        let d = match rot.direction() {
+            Direction::Left => "L",
+            Direction::Right => "R",
+        };
+        format!("{d}{}", rot.distance())
+    }
+
+    fn render_list(xs: &[Rotation]) -> String {
+        xs.iter().map(render).collect::<Vec<_>>().join("\n")
+    }
+
+    #[test]
+    fn scenario_rotation_parses_valid_inputs() {
+        assert_eq!(
+            "L10".parse::<Rotation>().unwrap(),
+            Rotation(Direction::Left, 10)
+        );
+        assert_eq!(
+            "R7".parse::<Rotation>().unwrap(),
+            Rotation(Direction::Right, 7)
+        );
+        assert_eq!(
+            " l3 ".parse::<Rotation>().unwrap(),
+            Rotation(Direction::Left, 3)
+        );
+        assert_eq!(
+            "r25".parse::<Rotation>().unwrap(),
+            Rotation(Direction::Right, 25)
+        );
+    }
+
+    #[test]
+    fn scenario_rotation_rejects_invalid_direction() {
+        let err = "X5".parse::<Rotation>().unwrap_err();
+        matches!(err, ParseRotationError::InvalidDirection(_));
+    }
+
+    #[test]
+    fn scenario_part1_hits_zero_exactly_once() {
+        assert_eq!(part1("R50"), 1);
+    }
+
+    #[test]
+    fn scenario_part1_wraps_correctly_without_false_hits() {
+        assert_eq!(part1("R60"), 0);
+    }
+
+    #[test]
+    fn scenario_part2_counts_multiple_zero_crossings() {
+        assert_eq!(part2("R250"), 3);
+    }
+
+    #[test]
+    fn scenario_part2_handles_mixed_directions() {
+        assert_eq!(part2("L50\nR150"), 2);
+    }
+
+    #[test]
+    fn scenario_part2_with_large_value() {
+        assert_eq!(part2("R10000"), 100);
+    }
+
+    proptest! {
+        #[test]
+        fn prop_part1_never_exceeds_part2(rotations in arb_rotation_list()) {
+            let input = render_list(&rotations);
+            let p1 = part1(&input);
+            let p2 = part2(&input);
+            prop_assert!(p1 <= p2);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn prop_zero_crossings_are_non_negative(
+            start in 0..DIAL_SIZE,
+            steps in 0..5000,
+            dir in arb_direction()
+        ) {
+            let result = count_zero_crossings(start, dir, steps);
+            prop_assert!(result >= 0);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn prop_cycles_count_exactly(
+            cycles in 0i32..2000,
+            dir in arb_direction()
+        ) {
+            let steps = cycles * DIAL_SIZE;
+            let crosses = count_zero_crossings(0, dir, steps);
+            prop_assert_eq!(crosses, cycles);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn prop_part2_matches_manual_model(rotations in arb_rotation_list()) {
+            let mut pos = 50;
+            let mut expected = 0;
+
+            for rot in &rotations {
+                expected += count_zero_crossings(pos, rot.direction(), rot.distance());
+                pos = match rot.direction() {
+                    Direction::Left => (pos - rot.distance()).rem_euclid(DIAL_SIZE),
+                    Direction::Right => (pos + rot.distance()).rem_euclid(DIAL_SIZE),
+                };
+            }
+
+            let input = render_list(&rotations);
+            prop_assert_eq!(part2(&input), expected);
+        }
+    }
+
+    prop_compose! {
+        fn arb_safe_rotation()(dist in 1i32..49, dir in arb_direction()) -> Rotation {
+            Rotation(dir, dist)
+        }
+    }
+
+    // proptest! {
+    //     #[test]
+    //     fn prop_safe_rotations_never_count(rotations in prop::collection::vec(arb_safe_rotation(), 0..200)) {
+    //         let input = render_list(&rotations);
+    //         prop_assert_eq!(part1(&input), 0);
+    //         prop_assert_eq!(part2(&input), 0);
+    //     }
+    // }
+
+    // ======================================================
+    // Rustdoc Example Validity
+    // ======================================================
+
+    #[test]
+    fn rustdoc_example_part1() {
+        assert_eq!(part1("R50"), 1);
+    }
+}
