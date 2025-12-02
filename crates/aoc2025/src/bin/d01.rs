@@ -7,11 +7,11 @@ enum Direction {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Rotation(Direction, i64);
+struct Rotation(Direction, i32);
 impl Rotation {
     pub const fn direction(&self) -> Direction { self.0 }
 
-    pub const fn distance(&self) -> i64 { self.1 }
+    pub const fn distance(&self) -> i32 { self.1 }
 }
 
 impl core::str::FromStr for Rotation {
@@ -24,8 +24,8 @@ impl core::str::FromStr for Rotation {
         }
 
         let direction = match buffer[0] {
-            b'R' | b'r' => Direction::Right,
             b'L' | b'l' => Direction::Left,
+            b'R' | b'r' => Direction::Right,
             c => return Err(ParseRotationError::InvalidDirection(c)),
         };
 
@@ -38,33 +38,25 @@ impl core::str::FromStr for Rotation {
     }
 }
 
-fn part1(input: impl AsRef<str>) -> i64 {
+fn part1(input: impl AsRef<str>) -> i32 {
     let input = input.as_ref();
-
-    let mut count = 0;
-    let mut position = 50;
-
     let rotations: Vec<Rotation> = input.lines().filter_map(|line| line.parse().ok()).collect();
 
-    for rot in &rotations {
-        match rot.direction() {
-            Direction::Right => {
-                position = (position + rot.distance()) % 100;
-            }
-            Direction::Left => {
-                position = (position - rot.distance()).rem_euclid(100);
-            }
+    let (_, count) = rotations.iter().fold((50, 0), |(position, count), rot| {
+        let position = match rot.direction() {
+            Direction::Left => (position - rot.distance()).rem_euclid(100),
+            Direction::Right => (position + rot.distance()).rem_euclid(100),
         };
 
-        if position == 0 {
-            count += 1
-        }
-    }
+        let count = if position == 0 { count + 1 } else { count };
+
+        (position, count)
+    });
 
     count
 }
 
-fn part2(input: impl AsRef<str>) -> i64 {
+fn part2(input: impl AsRef<str>) -> i32 {
     let _input = input.as_ref();
     0
 }
