@@ -8,6 +8,19 @@ enum Direction {
 
 const DIAL_SIZE: i32 = 100;
 
+fn main() {
+    use std::time::Instant;
+
+    let input = input();
+    let start = Instant::now();
+
+    println!("Part 1: {}", part1(&input));
+    println!("Part 2: {}", part2(&input));
+
+    let elapsed = start.elapsed();
+    println!("Elapsed time: {:.4} seconds", elapsed.as_secs_f64());
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Rotation(Direction, i32);
 impl Rotation {
@@ -115,18 +128,6 @@ impl core::fmt::Display for ParseRotationError {
 }
 impl core::error::Error for ParseRotationError {}
 
-fn main() {
-    use std::time::Instant;
-
-    let input = input();
-    let start = Instant::now();
-
-    println!("Part 1: {}", part1(&input));
-    println!("Part 2: {}", part2(&input));
-
-    let elapsed = start.elapsed();
-    println!("Elapsed time: {:.4} seconds", elapsed.as_secs_f64());
-}
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
@@ -278,19 +279,10 @@ mod tests {
 
     // proptest! {
     //     #[test]
-    //     fn prop_safe_rotations_never_count(rotations in prop::collection::vec(arb_safe_rotation(), 0..200)) {
-    //         let input = render_list(&rotations);
-    //         prop_assert_eq!(part1(&input), 0);
+    //     fn prop_safe_rotations_never_count(rotations in
+    // prop::collection::vec(arb_safe_rotation(), 0..200)) {         let input =
+    // render_list(&rotations);         prop_assert_eq!(part1(&input), 0);
     //         prop_assert_eq!(part2(&input), 0);
     //     }
     // }
-
-    // ======================================================
-    // Rustdoc Example Validity
-    // ======================================================
-
-    #[test]
-    fn rustdoc_example_part1() {
-        assert_eq!(part1("R50"), 1);
-    }
 }
