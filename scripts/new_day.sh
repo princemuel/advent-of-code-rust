@@ -25,7 +25,7 @@ fn part1(input: &str) -> u64 { 0 }
 fn part2(input: &str) -> u64 { 0 }
 
 fn main() {
-    let input = read_input();
+    let input = input();
     let start = std::time::Instant::now();
     println!("Part 1: {}", part1(&input));
     println!("Part 2: {}", part2(&input));

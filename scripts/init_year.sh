@@ -22,7 +22,7 @@ EOF
 cat >"crates/$PKG/src/lib.rs" <<'EOF'
 use std::io::{self, Read};
 
-pub fn read_line() -> String {
+pub fn input() -> String {
     let mut s = String::new();
     io::stdin().read_to_string(&mut s).expect("read failed");
     s.trim().to_string()

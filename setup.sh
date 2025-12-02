@@ -13,7 +13,7 @@ echo "----------------------------------"
 echo ""
 
 # Check if just is installed
-if ! command -v just &> /dev/null; then
+if ! command -v just &>/dev/null; then
     echo "⚠ 'just' is not installed"
     echo "Install with: yay -S just"
     echo ""
@@ -23,7 +23,7 @@ if ! command -v just &> /dev/null; then
 fi
 
 # Check if cargo is installed
-if ! command -v cargo &> /dev/null; then
+if ! command -v cargo &>/dev/null; then
     echo "✗ Rust/Cargo not found"
     echo "Install with: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
     exit 1
@@ -47,7 +47,7 @@ echo ""
 # Create .env template if it doesn't exist
 if [ ! -f .env ]; then
     echo "Creating .env template..."
-    cat > .env << 'EOF'
+    cat >.env <<'EOF'
 # Your Advent of Code session token
 # Get it from: https://adventofcode.com (browser cookies after login)
 TOKEN=
@@ -62,7 +62,7 @@ echo ""
 # Create .gitignore if it doesn't exist
 if [ ! -f .gitignore ]; then
     echo "Creating .gitignore..."
-    cat > .gitignore << 'EOF'
+    cat >.gitignore <<'EOF'
 # Rust
 target/
 Cargo.lock
@@ -90,7 +90,7 @@ echo ""
 # Create workspace Cargo.toml if it doesn't exist
 if [ ! -f Cargo.toml ]; then
     echo "Creating workspace Cargo.toml..."
-    cat > Cargo.toml << EOF
+    cat >Cargo.toml <<EOF
 [workspace]
 resolver = "3"
 members = ["crates/*"]
@@ -125,7 +125,7 @@ echo ""
 
 # Create year crate Cargo.toml
 echo "Creating $PKG crate..."
-cat > "crates/$PKG/Cargo.toml" << EOF
+cat >"crates/$PKG/Cargo.toml" <<EOF
 [package]
 name = "$PKG"
 version = "0.1.0"
@@ -142,11 +142,11 @@ echo ""
 
 # Create lib.rs with utilities
 echo "Creating utility library..."
-cat > "crates/$PKG/src/lib.rs" << 'EOF'
+cat >"crates/$PKG/src/lib.rs" <<'EOF'
 use std::io::{self, Read};
 
 /// Read input from stdin
-pub fn read_input() -> String {
+pub fn input() -> String {
     let mut input = String::new();
     io::stdin()
         .read_to_string(&mut input)
@@ -190,7 +190,7 @@ echo ""
 
 # Create day template
 echo "Creating day template..."
-cat > templates/day_template.rs << EOF
+cat >templates/day_template.rs <<EOF
 use $PKG::*;
 
 fn part1(input: &str) -> u64 {
@@ -202,7 +202,7 @@ fn part2(input: &str) -> u64 {
 }
 
 fn main() {
-    let input = read_input();
+    let input = input();
 
     let start = std::time::Instant::now();
     println!("Part 1: {}", part1(&input));
@@ -241,7 +241,7 @@ fi
 # Create README
 if [ ! -f README.md ]; then
     echo "Creating README.md..."
-    cat > README.md << EOF
+    cat >README.md <<EOF
 # Advent of Code $YEAR - Rust Solutions
 
 Solutions for [Advent of Code $YEAR](https://adventofcode.com/$YEAR) implemented in Rust.

@@ -98,7 +98,7 @@ fn part2(input: &str) -> u64 {
 }
 
 fn main() {
-    let input = read_input();
+    let input = input();
 
     let start = std::time::Instant::now();
     println!("Part 1: {}", part1(&input));
@@ -181,7 +181,7 @@ The `aoc2025` crate provides utilities in `src/lib.rs`:
 use aoc2025::*;
 
 // Read input from stdin
-let input = read_input();
+let input = input();
 
 // Parse as lines
 let lines = lines(input);
