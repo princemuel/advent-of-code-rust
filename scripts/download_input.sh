@@ -14,7 +14,7 @@ fi
 
 # Pad day to 2 digits for file naming
 DAY=$(printf "%02d" "$DAY")
-DAY_NUM=$((10#$DAY))  # Remove leading zeros for URL
+DAY_NUM=$((10#$DAY)) # Remove leading zeros for URL
 
 OUTPUT_DIR="inputs/$YEAR"
 OUTPUT_FILE="$OUTPUT_DIR/d$DAY.txt"
@@ -56,13 +56,13 @@ HTTP_CODE=$(curl -s -w "%{http_code}" \
 if [ "$HTTP_CODE" = "200" ]; then
     echo "✓ Successfully downloaded to $OUTPUT_FILE"
     # Show preview
-    LINE_COUNT=$(wc -l < "$OUTPUT_FILE")
+    LINE_COUNT=$(wc -l <"$OUTPUT_FILE")
     echo "   ($LINE_COUNT lines)"
     head -n 3 "$OUTPUT_FILE"
     [ "$LINE_COUNT" -gt 3 ] && echo "   ..."
 else
     echo "✗ Failed to download (HTTP $HTTP_CODE)"
-    [ -f "$OUTPUT_FILE" ] && cat "$OUTPUT_FILE"  # Show error message
+    [ -f "$OUTPUT_FILE" ] && cat "$OUTPUT_FILE" # Show error message
     rm -f "$OUTPUT_FILE"
     exit 1
 fi
