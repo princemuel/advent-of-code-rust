@@ -1,8 +1,7 @@
 use core::num::NonZeroU64;
 use core::ops::RangeInclusive;
-use core::str::FromStr;
 
-use aoc2025::read_input;
+use aoc2025::prelude::*;
 
 fn main() {
     use std::time::Instant;
@@ -26,7 +25,6 @@ fn main() {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IdRange(RangeInclusive<u64>);
-
 impl IdRange {
     pub fn new(start: u64, end: u64) -> Result<Self, ParseError> {
         if start > end {
@@ -125,8 +123,8 @@ impl DigitPattern {
     }
 
     pub fn repeat(&self, times: usize) -> Option<InvalidId> {
-        let pattern_str = self.value.to_string();
-        let repeated = pattern_str.repeat(times);
+        let pattern = self.value.to_string();
+        let repeated = pattern.repeat(times);
 
         repeated
             .parse::<NonZeroU64>()
@@ -150,7 +148,6 @@ impl DigitPattern {
 /// - Pattern does not start with '0'.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct InvalidId(NonZeroU64);
-
 impl InvalidId {
     pub const fn value(&self) -> u64 { self.0.get() }
 
@@ -236,15 +233,11 @@ impl From<InvalidId> for NonZeroU64 {
     fn from(id: InvalidId) -> Self { id.0 }
 }
 
-// ============================================================================
-// Candidate generation
-// ============================================================================
-
 fn digit_count(n: u64) -> usize { if n == 0 { 1 } else { n.to_string().len() } }
 
 /// Generate invalid IDs within `range` with repetition constraints.
 ///
-/// - `min_reps = 2, max_reps = 2`     => exactly two repetitions (Part 1).
+/// - `min_reps = 2, max_reps = 2` => exactly two repetitions (Part 1).
 /// - `min_reps = 2, max_reps = usize::MAX` => at least two repetitions (Part
 ///   2).
 fn generate_invalid_ids_for_range(
@@ -324,10 +317,6 @@ fn part_two(input: impl AsRef<str>) -> Result<u64, ParseError> {
     sum_invalid_ids_in_ranges(input, 2, usize::MAX, true)
 }
 
-// ============================================================================
-// Errors
-// ============================================================================
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NotRepeatedPatternReason {
     OddLength {
@@ -382,8 +371,8 @@ impl NotRepeatedPatternReason {
     }
 }
 
-impl core::fmt::Display for NotRepeatedPatternReason {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl fmt::Display for NotRepeatedPatternReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             NotRepeatedPatternReason::OddLength { value, length } => {
                 write!(
@@ -416,8 +405,8 @@ pub enum ParseError {
     NotRepeatedPattern(NotRepeatedPatternReason),
 }
 
-impl core::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::EmptyInput => write!(f, "Empty input"),
             Self::InvalidFormat(s) => write!(f, "Invalid format: {s}"),
@@ -430,7 +419,7 @@ impl core::fmt::Display for ParseError {
     }
 }
 
-impl core::error::Error for ParseError {}
+impl Error for ParseError {}
 
 // ============================================================================
 // Tests

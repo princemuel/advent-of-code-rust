@@ -1,7 +1,6 @@
 use core::marker::PhantomData;
-use core::str::FromStr;
 
-use aoc2025::read_input;
+use aoc2025::prelude::*;
 
 fn main() {
     use std::time::Instant;
@@ -193,8 +192,8 @@ enum ParseError {
     InsufficientBatteries,
 }
 
-impl core::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ParseError::InvalidJoltage(ch) => {
                 write!(f, "Invalid joltage character: '{ch}'")
@@ -208,7 +207,7 @@ impl core::fmt::Display for ParseError {
         }
     }
 }
-impl core::error::Error for ParseError {}
+impl Error for ParseError {}
 
 #[cfg(test)]
 mod tests {}

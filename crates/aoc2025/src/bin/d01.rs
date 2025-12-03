@@ -1,5 +1,6 @@
 //! https://adventofcode.com/2025/day/1
-use aoc2025::*;
+
+use aoc2025::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Direction {
@@ -31,7 +32,7 @@ impl Rotation {
     pub const fn distance(&self) -> i32 { self.1 }
 }
 
-impl core::str::FromStr for Rotation {
+impl FromStr for Rotation {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -119,8 +120,8 @@ enum ParseError {
     InvalidDirection(u8),
     InvalidDistance,
 }
-impl core::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::EmptyInput => write!(f, "Empty string"),
             Self::InvalidDirection(c) => write!(f, "Invalid direction: {}", *c as char),
@@ -128,7 +129,7 @@ impl core::fmt::Display for ParseError {
         }
     }
 }
-impl core::error::Error for ParseError {}
+impl Error for ParseError {}
 
 #[cfg(test)]
 mod tests {
