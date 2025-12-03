@@ -1,10 +1,12 @@
 # Advent of Code
 
-This repository contains solutions for [Advent of Code](https://adventofcode.com), written in Rust and organized per year.
+This repository contains solutions for [Advent of Code][aoc], written in Rust and organized per year.
 A custom CLI tool, **`aocctl`**, automates day creation, template selection, input downloading, running, and submissions.
 
 > [!IMPORTANT]
-> The code in this repo may be _sometimes_ (or most times 😉) verbose. That's just me finding out how far I can push my boundaries with Rust. I do try to implement the algorithms in a simpler form first, but they are in a private repo, so you're just gonna take my word for it.
+> The code in this repo is full of premature optimizations and consequentially may be _sometimes_ (or most times 😉) verbose. That's just me finding out how far I can push my boundaries with Rust. I do try to implement the algorithms in a simpler form first, but they are in a private repo, so you're just gonna take my word for it.
+
+[aoc]: https://adventofcode.com
 
 ## Project Structure
 
@@ -29,23 +31,43 @@ answers/[year]/   # Submission records
 ## Prerequisites
 
 - [Rust](https://www.rust-lang.org/tools/install)
-- [just](https://github.com/casey/just) - `cargo install just`
-- Optional: [cargo-watch](https://github.com/watchexec/cargo-watch) - `cargo install cargo-watch`
-- Advent of Code session cookie stored in any of these:
-  - .env SESSION in .env
-  - env var SESSION on the command line
-  - .session file in the working dir
-  - ~/.config/aoc/.session
+- Optional: [just](https://github.com/casey/just) - `cargo install just`
 
 ## Quick Start
 
-### 1. Initialize the year
+### Setup the AoC credentials
+
+Find your session token for the AoC. You'll need to visit [adventofcode.com][aoc]. Open the devtools of your browser, then:
+
+- Firefox: "Storage" tab, "Cookies" folder, and copy the "Value" field of the "session" cookie.
+- Google Chrome / Chromium: "Application" tab, "Cookies" folder, and copy the "Value" field of the "session" cookie.
+
+Then store the session cookie in any of these locations:
+
+- SESSION variable in .env
+- in a .session file in the working dir
+- at $HOME/.config/aoc/.session
+- env var SESSION on the command line
+
+### Optional: Install the aocctl cli tool
+
+To have more control and access to more options, you may decide to install the cli tool.
+
+```sh
+just install
+```
+
+This lets you run the tool directly via its name `aocctl` instead of prepending `cargo run` everytime.
+
+### Initialize the year
 
 ```bash
+just init 2025
+# or
 aocctl init 2025
 ```
 
-### 2. Create a new day
+### Scaffold a new day
 
 ```bash
 just new 1
@@ -53,7 +75,7 @@ just new 1
 aocctl new 1 --template fast
 ```
 
-### 3. Download input & solve
+### Download input & solve
 
 ```bash
 just solve 1
