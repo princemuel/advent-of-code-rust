@@ -12,7 +12,7 @@
 
 use std::io::Read as _;
 
-pub fn input() -> String {
+pub fn read_input() -> String {
     let mut input = String::new();
     std::io::stdin()
         .read_to_string(&mut input)

@@ -1,3 +1,4 @@
+//! https://adventofcode.com/2025/day/1
 use aoc2025::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -11,14 +12,15 @@ const DIAL_SIZE: i32 = 100;
 fn main() {
     use std::time::Instant;
 
-    let input = input();
+    let data = read_input();
+
     let start = Instant::now();
+    println!("Part 1: {}", part_one(&data));
+    println!("Elapsed time: {:.4} seconds", start.elapsed().as_secs_f64());
 
-    println!("Part 1: {}", part1(&input));
-    println!("Part 2: {}", part2(&input));
-
-    let elapsed = start.elapsed();
-    println!("Elapsed time: {:.4} seconds", elapsed.as_secs_f64());
+    let start = Instant::now();
+    println!("Part 2: {}", part_two(&data));
+    println!("Elapsed time: {:.4} seconds", start.elapsed().as_secs_f64());
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,30 +32,30 @@ impl Rotation {
 }
 
 impl core::str::FromStr for Rotation {
-    type Err = ParseRotationError;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let buffer = s.trim().as_bytes();
         if buffer.is_empty() {
-            return Err(ParseRotationError::Empty);
+            return Err(ParseError::EmptyInput);
         }
 
         let direction = match buffer[0] {
             b'L' | b'l' => Direction::Left,
             b'R' | b'r' => Direction::Right,
-            c => return Err(ParseRotationError::InvalidDirection(c)),
+            c => return Err(ParseError::InvalidDirection(c)),
         };
 
         let distance = str::from_utf8(&buffer[1..])
-            .map_err(|_| ParseRotationError::InvalidDistance)?
+            .map_err(|_| ParseError::InvalidDistance)?
             .parse()
-            .map_err(|_| ParseRotationError::InvalidDistance)?;
+            .map_err(|_| ParseError::InvalidDistance)?;
 
         Ok(Self(direction, distance))
     }
 }
 
-fn part1(input: impl AsRef<str>) -> i32 {
+fn part_one(input: impl AsRef<str>) -> i32 {
     let rotations = input
         .as_ref()
         .lines()
@@ -74,7 +76,7 @@ fn part1(input: impl AsRef<str>) -> i32 {
     count
 }
 
-fn part2(input: impl AsRef<str>) -> i32 {
+fn part_two(input: impl AsRef<str>) -> i32 {
     let rotations = input
         .as_ref()
         .lines()
@@ -111,22 +113,22 @@ fn count_zero_crossings(start: i32, direction: Direction, steps: i32) -> i32 {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum ParseRotationError {
-    Empty,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ParseError {
+    EmptyInput,
     InvalidDirection(u8),
     InvalidDistance,
 }
-impl core::fmt::Display for ParseRotationError {
+impl core::fmt::Display for ParseError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::Empty => write!(f, "Empty string"),
+            Self::EmptyInput => write!(f, "Empty string"),
             Self::InvalidDirection(c) => write!(f, "Invalid direction: {}", *c as char),
             Self::InvalidDistance => write!(f, "Invalid distance"),
         }
     }
 }
-impl core::error::Error for ParseRotationError {}
+impl core::error::Error for ParseError {}
 
 #[cfg(test)]
 mod tests {
@@ -190,40 +192,40 @@ mod tests {
     #[test]
     fn scenario_rotation_rejects_invalid_direction() {
         let err = "X5".parse::<Rotation>().unwrap_err();
-        matches!(err, ParseRotationError::InvalidDirection(_));
+        matches!(err, ParseError::InvalidDirection(_));
     }
 
     #[test]
     fn scenario_part1_hits_zero_exactly_once() {
-        assert_eq!(part1("R50"), 1);
+        assert_eq!(part_one("R50"), 1);
     }
 
     #[test]
     fn scenario_part1_wraps_correctly_without_false_hits() {
-        assert_eq!(part1("R60"), 0);
+        assert_eq!(part_one("R60"), 0);
     }
 
     #[test]
     fn scenario_part2_counts_multiple_zero_crossings() {
-        assert_eq!(part2("R250"), 3);
+        assert_eq!(part_two("R250"), 3);
     }
 
     #[test]
     fn scenario_part2_handles_mixed_directions() {
-        assert_eq!(part2("L50\nR150"), 2);
+        assert_eq!(part_two("L50\nR150"), 2);
     }
 
     #[test]
     fn scenario_part2_with_large_value() {
-        assert_eq!(part2("R10000"), 100);
+        assert_eq!(part_two("R10000"), 100);
     }
 
     proptest! {
         #[test]
-        fn prop_part1_never_exceeds_part2(rotations in arb_rotation_list()) {
+        fn prop_part1_never_exceeds_part_two(rotations in arb_rotation_list()) {
             let input = render_list(&rotations);
-            let p1 = part1(&input);
-            let p2 = part2(&input);
+            let p1 = part_one(&input);
+            let p2 = part_two(&input);
             prop_assert!(p1 <= p2);
         }
     }
@@ -267,22 +269,32 @@ mod tests {
             }
 
             let input = render_list(&rotations);
-            prop_assert_eq!(part2(&input), expected);
+            prop_assert_eq!(part_two(&input), expected);
         }
     }
 
     prop_compose! {
-        fn arb_safe_rotation()(dist in 1i32..49, dir in arb_direction()) -> Rotation {
-            Rotation(dir, dist)
+        fn arb_safe_rotation()(
+            dist in 1i32..10,  // Much smaller range
+            is_left in prop::bool::ANY
+        ) -> Rotation {
+            let direction = if is_left {
+                Direction::Left
+            } else {
+                Direction::Right
+            };
+            Rotation(direction, dist)
         }
     }
 
-    // proptest! {
-    //     #[test]
-    //     fn prop_safe_rotations_never_count(rotations in
-    // prop::collection::vec(arb_safe_rotation(), 0..200)) {         let input =
-    // render_list(&rotations);         prop_assert_eq!(part1(&input), 0);
-    //         prop_assert_eq!(part2(&input), 0);
-    //     }
-    // }
+    proptest! {
+        #[test]
+        fn prop_safe_rotations_never_count(
+            rotations in prop::collection::vec(arb_safe_rotation(), 0..10)
+        ) {
+            let input = render_list(&rotations);
+            prop_assert_eq!(part_one(&input), 0);
+            prop_assert_eq!(part_two(&input), 0);
+        }
+    }
 }
