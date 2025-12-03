@@ -3,6 +3,9 @@
 This repository contains solutions for [Advent of Code](https://adventofcode.com), written in Rust and organized per year.
 A custom CLI tool, **`aocctl`**, automates day creation, template selection, input downloading, running, and submissions.
 
+> [!IMPORTANT]
+> The code in this repo may be _sometimes_ (or most times 😉) verbose. That's just me finding out how far I can push my boundaries with Rust. I do try to implement the algorithms in a simpler form first, but they are in a private repo, so you're just gonna take my word for it.
+
 ## Project Structure
 
 ```console
