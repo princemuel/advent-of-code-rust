@@ -128,40 +128,29 @@ impl BatteryBank<Validated> {
         let joltages = self.joltages();
 
         if joltages.len() < TARGET {
-            // Not enough batteries - shouldn't happen with validated banks
             return 0;
         }
 
-        let mut result = 0u128;
-        let mut selected = 0;
-        let mut position = 0;
+        let to_remove = joltages.len() - TARGET;
+        let mut stack: Vec<Joltage> = Vec::with_capacity(TARGET);
+        let mut removals_left = to_remove;
 
-        while selected < TARGET {
-            let remaining_needed = TARGET - selected;
-            let batteries_left = joltages.len() - position;
-            let can_skip = batteries_left - remaining_needed;
+        for &joltage in joltages {
+            // Pop smaller elements from stack while we can still afford removals
+            // and the current element is larger
+            while !stack.is_empty() && removals_left > 0 && stack.last().unwrap() < &joltage {
+                stack.pop();
+                removals_left -= 1;
+            }
 
-            // Find the maximum battery in the range we can consider
-            let max_in_range = joltages[position..=position + can_skip]
-                .iter()
-                .copied()
-                .max()
-                .unwrap();
-
-            // Find the first occurrence of this maximum
-            let max_position = joltages[position..=position + can_skip]
-                .iter()
-                .position(|&j| j == max_in_range)
-                .unwrap();
-
-            // Select this battery
-            position += max_position;
-            result = result * 10 + joltages[position].value() as u128;
-            selected += 1;
-            position += 1;
+            stack.push(joltage);
         }
 
-        result
+        // Convert the first TARGET elements to the result number
+        stack
+            .iter()
+            .take(TARGET)
+            .fold(0u128, |acc, &j| acc * 10 + j.value() as u128)
     }
 }
 
