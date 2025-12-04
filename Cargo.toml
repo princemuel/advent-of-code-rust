@@ -1,3 +1,4 @@
+#:schema https://www.schemastore.org/cargo.json
 [workspace]
 members  = ["crates/*"]
 resolver = "3"
@@ -6,6 +7,10 @@ resolver = "3"
 authors = ["Prince Muel <68931805+princemuel@users.noreply.github.com>"]
 edition = "2024"
 version = "0.1.0"
+
+[workspace.dependencies]
+anyhow   = "1"
+proptest = "1"
 
 [profile.dev]
 debug     = true
@@ -23,6 +28,3 @@ codegen-units = 1
 debug         = false
 lto           = true
 opt-level     = 3
-
-[workspace.dependencies]
-proptest = "1"
