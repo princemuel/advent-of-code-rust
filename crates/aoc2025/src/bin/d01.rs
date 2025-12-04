@@ -4,11 +4,13 @@ use aoc2025::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Direction {
-    Right,
-    Left,
+    Left  = 0,
+    Right = 1,
 }
 
-const DIAL_SIZE: i32 = 100;
+impl Direction {}
+
+const DIAL_SIZE: isize = 100;
 
 fn main() {
     use std::time::Instant;
@@ -25,11 +27,15 @@ fn main() {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Rotation(Direction, i32);
+struct Rotation(Direction, isize);
 impl Rotation {
     pub const fn direction(&self) -> Direction { self.0 }
 
-    pub const fn distance(&self) -> i32 { self.1 }
+    pub const fn steps(&self) -> isize { self.1 }
+
+    pub fn list(input: &str) -> Vec<Self> {
+        input.lines().filter_map(|line| line.parse().ok()).collect()
+    }
 }
 
 impl FromStr for Rotation {
@@ -47,26 +53,22 @@ impl FromStr for Rotation {
             c => return Err(ParseError::InvalidDirection(c)),
         };
 
-        let distance = str::from_utf8(&buffer[1..])
-            .map_err(|_| ParseError::InvalidDistance)?
+        let steps = str::from_utf8(&buffer[1..])
+            .map_err(|_| ParseError::InvalidSteps)?
             .parse()
-            .map_err(|_| ParseError::InvalidDistance)?;
+            .map_err(|_| ParseError::InvalidSteps)?;
 
-        Ok(Self(direction, distance))
+        Ok(Self(direction, steps))
     }
 }
 
-fn part_one(input: impl AsRef<str>) -> i32 {
-    let rotations = input
-        .as_ref()
-        .lines()
-        .filter_map(|line| line.parse().ok())
-        .collect::<Vec<Rotation>>();
+fn part_one(input: &str) -> isize {
+    let rotations = Rotation::list(input);
 
-    let (_, count) = rotations.iter().fold((50, 0), |(position, count), rot| {
-        let position = match rot.direction() {
-            Direction::Left => (position - rot.distance()).rem_euclid(DIAL_SIZE),
-            Direction::Right => (position + rot.distance()).rem_euclid(DIAL_SIZE),
+    let (_, count) = rotations.iter().fold((50, 0), |(pos, count), item| {
+        let position = match item.direction() {
+            Direction::Left => (pos - item.steps()).rem_euclid(DIAL_SIZE),
+            Direction::Right => (pos + item.steps()).rem_euclid(DIAL_SIZE),
         };
 
         let count = if position == 0 { count + 1 } else { count };
@@ -77,28 +79,25 @@ fn part_one(input: impl AsRef<str>) -> i32 {
     count
 }
 
-fn part_two(input: impl AsRef<str>) -> i32 {
-    let rotations = input
-        .as_ref()
-        .lines()
-        .filter_map(|line| line.parse().ok())
-        .collect::<Vec<Rotation>>();
+fn part_two(input: &str) -> isize {
+    let rotations = Rotation::list(input);
 
-    let (_, count) = rotations.iter().fold((50, 0), |(position, count), rot| {
+    let (_, count) = rotations.iter().fold((50, 0), |(pos, count), item| {
         // Count how many times we cross 0 during this rotation
-        let crossings = count_zero_crossings(position, rot.direction(), rot.distance());
-        let position = match rot.direction() {
-            Direction::Left => (position - rot.distance()).rem_euclid(DIAL_SIZE),
-            Direction::Right => (position + rot.distance()).rem_euclid(DIAL_SIZE),
+        let crossings = rotate(pos, item.direction(), item.steps());
+        let position = match item.direction() {
+            Direction::Left => (pos - item.steps()).rem_euclid(DIAL_SIZE),
+            Direction::Right => (pos + item.steps()).rem_euclid(DIAL_SIZE),
         };
+
         (position, count + crossings)
     });
 
     count
 }
 
-fn count_zero_crossings(start: i32, direction: Direction, steps: i32) -> i32 {
-    // Steps required to reach zero from the current position.
+fn rotate(start: isize, direction: Direction, steps: isize) -> isize {
+    // Steps required to reach zero from the current pos.
     let steps_to_zero = match direction {
         Direction::Right => (DIAL_SIZE - start).rem_euclid(DIAL_SIZE),
         Direction::Left => start,
@@ -118,14 +117,14 @@ fn count_zero_crossings(start: i32, direction: Direction, steps: i32) -> i32 {
 enum ParseError {
     EmptyInput,
     InvalidDirection(u8),
-    InvalidDistance,
+    InvalidSteps,
 }
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::EmptyInput => write!(f, "Empty string"),
             Self::InvalidDirection(c) => write!(f, "Invalid direction: {}", *c as char),
-            Self::InvalidDistance => write!(f, "Invalid distance"),
+            Self::InvalidSteps => write!(f, "Invalid steps"),
         }
     }
 }
@@ -146,7 +145,7 @@ mod tests {
     prop_compose! {
         fn arb_rotation()(
             dir in arb_direction(),
-            dist in 0i32..5000
+            dist in 0isize..5000
         ) -> Rotation {
             Rotation(dir, dist)
         }
@@ -163,7 +162,7 @@ mod tests {
             Direction::Left => "L",
             Direction::Right => "R",
         };
-        format!("{d}{}", rot.distance())
+        format!("{d}{}", rot.steps())
     }
 
     fn render_list(xs: &[Rotation]) -> String {
@@ -235,10 +234,10 @@ mod tests {
         #[test]
         fn prop_zero_crossings_are_non_negative(
             start in 0..DIAL_SIZE,
-            steps in 0..5000,
+            steps in 0..5000isize,
             dir in arb_direction()
         ) {
-            let result = count_zero_crossings(start, dir, steps);
+            let result = rotate(start, dir, steps);
             prop_assert!(result >= 0);
         }
     }
@@ -246,11 +245,11 @@ mod tests {
     proptest! {
         #[test]
         fn prop_cycles_count_exactly(
-            cycles in 0i32..2000,
+            cycles in 0..2000isize,
             dir in arb_direction()
         ) {
             let steps = cycles * DIAL_SIZE;
-            let crosses = count_zero_crossings(0, dir, steps);
+            let crosses = rotate(0, dir, steps);
             prop_assert_eq!(crosses, cycles);
         }
     }
@@ -262,10 +261,10 @@ mod tests {
             let mut expected = 0;
 
             for rot in &rotations {
-                expected += count_zero_crossings(pos, rot.direction(), rot.distance());
+                expected += rotate(pos, rot.direction(), rot.steps());
                 pos = match rot.direction() {
-                    Direction::Left => (pos - rot.distance()).rem_euclid(DIAL_SIZE),
-                    Direction::Right => (pos + rot.distance()).rem_euclid(DIAL_SIZE),
+                    Direction::Left => (pos - rot.steps()).rem_euclid(DIAL_SIZE),
+                    Direction::Right => (pos + rot.steps()).rem_euclid(DIAL_SIZE),
                 };
             }
 
@@ -276,7 +275,7 @@ mod tests {
 
     prop_compose! {
         fn arb_safe_rotation()(
-            dist in 1i32..10,  // Much smaller range
+            dist in 1..10isize,  // Much smaller range
             is_left in prop::bool::ANY
         ) -> Rotation {
             let direction = if is_left {

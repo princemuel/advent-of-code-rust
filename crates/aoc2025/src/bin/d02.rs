@@ -1,4 +1,4 @@
-use core::num::NonZeroU64;
+use core::num::NonZeroUsize;
 use core::ops::RangeInclusive;
 
 use aoc2025::prelude::*;
@@ -24,9 +24,9 @@ fn main() {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IdRange(RangeInclusive<u64>);
-impl IdRange {
-    pub fn new(start: u64, end: u64) -> Result<Self, ParseError> {
+pub struct Range(RangeInclusive<usize>);
+impl Range {
+    pub fn new(start: usize, end: usize) -> Result<Self, ParseError> {
         if start > end {
             Err(ParseError::InvalidRangeBounds { start, end })
         } else {
@@ -34,34 +34,30 @@ impl IdRange {
         }
     }
 
-    pub fn inner(&self) -> &RangeInclusive<u64> { &self.0 }
+    pub fn start(&self) -> usize { *self.0.start() }
 
-    pub fn into_inner(self) -> RangeInclusive<u64> { self.0 }
+    pub fn end(&self) -> usize { *self.0.end() }
 
-    pub fn start(&self) -> u64 { *self.0.start() }
+    pub fn contains(&self, value: usize) -> bool { self.0.contains(&value) }
 
-    pub fn end(&self) -> u64 { *self.0.end() }
-
-    pub fn contains(&self, value: u64) -> bool { self.0.contains(&value) }
-
-    pub fn iter(&self) -> impl Iterator<Item = u64> + '_ { self.0.clone() }
+    pub fn iter(&self) -> impl Iterator<Item = usize> + '_ { self.0.clone() }
 }
 
-impl IntoIterator for IdRange {
-    type IntoIter = RangeInclusive<u64>;
-    type Item = u64;
+impl IntoIterator for Range {
+    type IntoIter = RangeInclusive<usize>;
+    type Item = usize;
 
     fn into_iter(self) -> Self::IntoIter { self.0.clone() }
 }
 
-impl IntoIterator for &IdRange {
-    type IntoIter = RangeInclusive<u64>;
-    type Item = u64;
+impl IntoIterator for &Range {
+    type IntoIter = RangeInclusive<usize>;
+    type Item = usize;
 
     fn into_iter(self) -> Self::IntoIter { self.0.clone() }
 }
 
-impl FromStr for IdRange {
+impl FromStr for Range {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -81,11 +77,11 @@ impl FromStr for IdRange {
             .parse()
             .map_err(|_| ParseError::InvalidNumber(parts[1].to_string()))?;
 
-        IdRange::new(start, end)
+        Range::new(start, end)
     }
 }
 
-fn parse_id_ranges(input: &str) -> Result<Vec<IdRange>, ParseError> {
+fn parse_id_ranges(input: &str) -> Result<Vec<Range>, ParseError> {
     if input.trim().is_empty() {
         return Err(ParseError::EmptyInput);
     }
@@ -98,21 +94,21 @@ fn parse_id_ranges(input: &str) -> Result<Vec<IdRange>, ParseError> {
 /// For example:
 /// - digits = 1 -> 1..=9
 /// - digits = 2 -> 10..=99
-fn pattern_seed_span(digits: usize) -> RangeInclusive<u64> {
-    let min = 10u64.pow(digits as u32 - 1);
-    let max = 10u64.pow(digits as u32) - 1;
+fn pattern_seed_span(digits: usize) -> RangeInclusive<usize> {
+    let min = 10usize.pow(digits as u32 - 1);
+    let max = 10usize.pow(digits as u32) - 1;
     min..=max
 }
 
 /// A numeric pattern (seed) that can be repeated to form an invalid ID.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct DigitPattern {
-    value:  u64,
+pub struct Pattern {
+    value:  usize,
     digits: usize,
 }
 
-impl DigitPattern {
-    pub fn new(value: u64, digits: usize) -> Option<Self> {
+impl Pattern {
+    pub fn new(value: usize, digits: usize) -> Option<Self> {
         let s = value.to_string();
 
         if s.len() != digits || s.starts_with('0') {
@@ -127,7 +123,7 @@ impl DigitPattern {
         let repeated = pattern.repeat(times);
 
         repeated
-            .parse::<NonZeroU64>()
+            .parse::<NonZeroUsize>()
             .ok()
             .map(InvalidId::new_unchecked)
     }
@@ -135,8 +131,8 @@ impl DigitPattern {
     pub fn to_invalid_id(&self) -> InvalidId {
         let repeated = format!("{0}{0}", self.value);
         let nz = repeated
-            .parse::<NonZeroU64>()
-            .expect("Pattern concatenation should produce valid NonZeroU64");
+            .parse::<NonZeroUsize>()
+            .expect("Pattern concatenation should produce valid NonZeroUsize");
         InvalidId::new_unchecked(nz)
     }
 }
@@ -147,12 +143,12 @@ impl DigitPattern {
 /// - At least 2 repetitions of some non-empty pattern.
 /// - Pattern does not start with '0'.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct InvalidId(NonZeroU64);
+pub struct InvalidId(NonZeroUsize);
 impl InvalidId {
-    pub const fn value(&self) -> u64 { self.0.get() }
+    pub const fn value(&self) -> usize { self.0.get() }
 
     /// Safety: caller must ensure `value` satisfies the invariants.
-    pub(crate) fn new_unchecked(value: NonZeroU64) -> Self { Self(value) }
+    pub(crate) fn new_unchecked(value: NonZeroUsize) -> Self { Self(value) }
 
     /// Core helper: find a repeating pattern inside `s`.
     ///
@@ -206,13 +202,13 @@ impl InvalidId {
     pub fn is_repeating_pattern(s: &str) -> bool { Self::has_repeating_pattern(s, 2).is_some() }
 }
 
-impl TryFrom<u64> for InvalidId {
+impl TryFrom<usize> for InvalidId {
     type Error = ParseError;
 
-    fn try_from(value: u64) -> Result<Self, Self::Error> {
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
         // First ensure non zero.
-        let non_zero =
-            NonZeroU64::new(value).ok_or_else(|| ParseError::InvalidNumber("0".to_string()))?;
+        let non_zero = NonZeroUsize::new(value)
+            .ok_or_else(|| ParseError::InvalidNumber("0".to_string()))?;
 
         let s = value.to_string();
 
@@ -225,15 +221,15 @@ impl TryFrom<u64> for InvalidId {
     }
 }
 
-impl From<InvalidId> for u64 {
+impl From<InvalidId> for usize {
     fn from(id: InvalidId) -> Self { id.value() }
 }
 
-impl From<InvalidId> for NonZeroU64 {
+impl From<InvalidId> for NonZeroUsize {
     fn from(id: InvalidId) -> Self { id.0 }
 }
 
-fn digit_count(n: u64) -> usize { if n == 0 { 1 } else { n.to_string().len() } }
+fn digit_count(n: usize) -> usize { if n == 0 { 1 } else { n.to_string().len() } }
 
 /// Generate invalid IDs within `range` with repetition constraints.
 ///
@@ -241,7 +237,7 @@ fn digit_count(n: u64) -> usize { if n == 0 { 1 } else { n.to_string().len() } }
 /// - `min_reps = 2, max_reps = usize::MAX` => at least two repetitions (Part
 ///   2).
 fn generate_invalid_ids_for_range(
-    range: &IdRange,
+    range: &Range,
     min_reps: usize,
     max_reps: usize,
 ) -> impl Iterator<Item = InvalidId> + '_ {
@@ -268,7 +264,7 @@ fn generate_invalid_ids_for_range(
                 // possible seeds and keep those whose repeated form falls
                 // inside the range.
                 pattern_seed_span(pattern_len).filter_map(move |seed_value| {
-                    let pattern = DigitPattern::new(seed_value, pattern_len)?;
+                    let pattern = Pattern::new(seed_value, pattern_len)?;
                     let repeated = pattern.repeat(repetitions)?;
                     let id_value = repeated.value();
 
@@ -279,14 +275,14 @@ fn generate_invalid_ids_for_range(
 }
 
 fn sum_invalid_ids_in_ranges(
-    input: impl AsRef<str>,
+    input: &str,
     min_reps: usize,
     max_reps: usize,
     deduplicate: bool,
-) -> Result<u64, ParseError> {
+) -> Result<usize, ParseError> {
     use std::collections::HashSet;
 
-    let ranges = parse_id_ranges(input.as_ref())?;
+    let ranges = parse_id_ranges(input)?;
 
     let result = if !deduplicate {
         ranges
@@ -295,7 +291,7 @@ fn sum_invalid_ids_in_ranges(
             .map(|id| id.value())
             .sum()
     } else {
-        let result: HashSet<u64> = ranges
+        let result: HashSet<usize> = ranges
             .iter()
             .flat_map(|range| generate_invalid_ids_for_range(range, min_reps, max_reps))
             .map(|id| id.value())
@@ -308,39 +304,39 @@ fn sum_invalid_ids_in_ranges(
 }
 
 /// Part 1: exactly 2 repetitions.
-fn part_one(input: impl AsRef<str>) -> Result<u64, ParseError> {
+fn part_one(input: &str) -> Result<usize, ParseError> {
     sum_invalid_ids_in_ranges(input, 2, 2, false)
 }
 
 /// Part 2: 2 or more repetitions, unique IDs only.
-fn part_two(input: impl AsRef<str>) -> Result<u64, ParseError> {
+fn part_two(input: &str) -> Result<usize, ParseError> {
     sum_invalid_ids_in_ranges(input, 2, usize::MAX, true)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NotRepeatedPatternReason {
     OddLength {
-        value:  u64,
+        value:  usize,
         length: usize,
     },
     HalvesNotEqual {
-        value: u64,
+        value: usize,
         left:  String,
         right: String,
     },
     LeadingZero {
-        value:   u64,
+        value:   usize,
         pattern: String,
     },
     NoRepeatingPattern {
-        value: u64,
+        value: usize,
     },
 }
 
 impl NotRepeatedPatternReason {
     /// Best-effort explanation of why a value is not considered a repeated
     /// pattern.
-    pub fn explain(value: u64) -> Self {
+    pub fn explain(value: usize) -> Self {
         let s = value.to_string();
         let length = s.len();
 
@@ -401,7 +397,7 @@ pub enum ParseError {
     EmptyInput,
     InvalidFormat(String),
     InvalidNumber(String),
-    InvalidRangeBounds { start: u64, end: u64 },
+    InvalidRangeBounds { start: usize, end: usize },
     NotRepeatedPattern(NotRepeatedPatternReason),
 }
 
@@ -445,14 +441,14 @@ mod tests {
 
     #[test]
     fn scenario_id_range_wraps_std_range_behavior() {
-        let range = IdRange::new(10, 20).unwrap();
+        let range = Range::new(10, 20).unwrap();
 
         assert_eq!(range.start(), 10);
         assert_eq!(range.end(), 20);
         assert!(range.contains(15));
         assert!(!range.contains(5));
 
-        let values: Vec<u64> = range.iter().collect();
+        let values: Vec<usize> = range.iter().collect();
         assert_eq!(values.len(), 11);
         assert_eq!(values[0], 10);
         assert_eq!(values[10], 20);
@@ -460,7 +456,7 @@ mod tests {
 
     #[test]
     fn scenario_id_range_supports_into_iterator_for_borrowed_and_owned() {
-        let range = IdRange::new(5, 8).unwrap();
+        let range = Range::new(5, 8).unwrap();
 
         let mut sum = 0;
         for n in &range {
@@ -468,7 +464,7 @@ mod tests {
         }
         assert_eq!(sum, 5 + 6 + 7 + 8);
 
-        let values: Vec<u64> = range.into_iter().collect();
+        let values: Vec<usize> = range.into_iter().collect();
         assert_eq!(values, vec![5, 6, 7, 8]);
     }
 
@@ -486,11 +482,11 @@ mod tests {
 
     #[test]
     fn scenario_id_range_iteration_yields_same_values_for_all_paths() {
-        let range = IdRange::new(11, 22).unwrap();
+        let range = Range::new(11, 22).unwrap();
 
-        let v1: Vec<u64> = range.iter().collect();
-        let v2: Vec<u64> = range.clone().into_iter().collect();
-        let v3: Vec<u64> = (&range).into_iter().collect();
+        let v1: Vec<usize> = range.iter().collect();
+        let v2: Vec<usize> = range.clone().into_iter().collect();
+        let v3: Vec<usize> = (&range).into_iter().collect();
 
         assert_eq!(v1, v2);
         assert_eq!(v2, v3);
@@ -550,18 +546,18 @@ mod tests {
         assert!(InvalidId::try_from(0).is_err());
 
         let id = InvalidId::try_from(11).unwrap();
-        let non_zero: NonZeroU64 = id.into();
+        let non_zero: NonZeroUsize = id.into();
         assert_eq!(non_zero.get(), 11);
     }
 
     #[test]
-    fn scenario_invalid_id_converts_to_u64_and_non_zero_u64() {
+    fn scenario_invalid_id_converts_to_usize_and_non_zero_usize() {
         let id = InvalidId::try_from(1010).unwrap();
 
-        let val: u64 = id.into();
+        let val: usize = id.into();
         assert_eq!(val, 1010);
 
-        let non_zero: NonZeroU64 = id.into();
+        let non_zero: NonZeroUsize = id.into();
         assert_eq!(non_zero.get(), 1010);
     }
 
@@ -605,7 +601,7 @@ mod tests {
 
     #[test]
     fn scenario_digit_pattern_repeat_builds_longer_invalid_ids() {
-        let pattern = DigitPattern::new(12, 2).unwrap();
+        let pattern = Pattern::new(12, 2).unwrap();
         assert_eq!(pattern.repeat(2).unwrap().value(), 1212);
         assert_eq!(pattern.repeat(3).unwrap().value(), 121212);
     }

@@ -18,12 +18,12 @@ fn main() {
 
 /// A joltage value between 1-9 (inclusive)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct Joltage(u8);
+struct Joltage(usize);
 
 impl Joltage {
-    pub fn new(value: u8) -> Option<Self> { (1..=9).contains(&value).then_some(Self(value)) }
+    pub fn new(value: usize) -> Option<Self> { (1..=9).contains(&value).then_some(Self(value)) }
 
-    fn value(self) -> u8 { self.0 }
+    fn value(self) -> usize { self.0 }
 }
 
 impl TryFrom<char> for Joltage {
@@ -31,7 +31,7 @@ impl TryFrom<char> for Joltage {
 
     fn try_from(c: char) -> Result<Self, Self::Error> {
         c.to_digit(10)
-            .and_then(|digit| Joltage::new(digit as u8))
+            .and_then(|digit| Joltage::new(digit as usize))
             .ok_or(ParseError::InvalidJoltage(c))
     }
 }
@@ -46,7 +46,7 @@ struct TwoDigitJoltage {
 impl TwoDigitJoltage {
     fn new(tens: Joltage, ones: Joltage) -> Self { Self { tens, ones } }
 
-    fn total(self) -> u32 { self.tens.value() as u32 * 10 + self.ones.value() as u32 }
+    fn total(self) -> usize { self.tens.value() * 10 + self.ones.value() }
 }
 
 /// Marker: Battery bank has been parsed but not validated
@@ -123,7 +123,7 @@ impl BatteryBank<Validated> {
             .collect()
     }
 
-    fn max_twelve_digit_joltage(&self) -> u128 {
+    fn max_twelve_digit_joltage(&self) -> usize {
         const TARGET: usize = 12;
         let joltages = self.joltages();
 
@@ -150,7 +150,7 @@ impl BatteryBank<Validated> {
         stack
             .iter()
             .take(TARGET)
-            .fold(0u128, |acc, &j| acc * 10 + j.value() as u128)
+            .fold(0usize, |acc, &j| acc * 10 + j.value())
     }
 }
 
@@ -165,9 +165,8 @@ impl FromStr for BatteryBank<Parsed> {
 }
 
 /// Solve part 1.
-fn part_one(input: impl AsRef<str>) -> u32 {
+fn part_one(input: &str) -> usize {
     input
-        .as_ref()
         .lines()
         .filter(|line| !line.trim().is_empty())
         .filter_map(|line| line.parse::<BatteryBank<Parsed>>().ok()?.validate().ok())
@@ -176,9 +175,8 @@ fn part_one(input: impl AsRef<str>) -> u32 {
 }
 
 /// Solve part 2.
-fn part_two(input: impl AsRef<str>) -> u128 {
+fn part_two(input: &str) -> usize {
     input
-        .as_ref()
         .lines()
         .filter(|line| !line.trim().is_empty())
         .filter_map(|line| line.parse::<BatteryBank<Parsed>>().ok()?.validate().ok())
