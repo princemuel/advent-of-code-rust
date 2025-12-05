@@ -4,6 +4,7 @@
 //! types and imports and avoid long `use` lists.
 
 pub use core::error::Error;
+pub use core::ops::RangeInclusive;
 pub use core::str::FromStr;
 pub use std::fs::File;
 pub use std::io::{BufRead, BufReader, Read};
