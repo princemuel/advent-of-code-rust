@@ -52,30 +52,32 @@ fn part_one(input: &str) -> usize {
 
 /// Solve part 2.
 fn part_two(input: &str) -> usize {
-    let mut grid: Vec<_> = input.lines().map(|line| line.as_bytes().to_vec()).collect();
+    let grid: Vec<_> = input.lines().map(|line| line.as_bytes().to_vec()).collect();
 
     let rows = grid.len();
     let cols = grid.first().map_or_else(|| 0, |v| v.len());
 
-    let mut total_removed = 0;
-
     // Keep removing until no more rolls are accessible
-    loop {
-        let rolls = find_accessible_rolls(&grid, rows, cols);
+    iter::successors(Some((grid, 0)), move |(current_grid, _)| {
+        let (next_grid, removed) = remove_once(current_grid, rows, cols);
+        (removed > 0).then_some((next_grid, removed))
+    })
+    .map(|(.., total)| total)
+    .sum()
+}
 
-        if rolls.is_empty() {
-            break; // No more accessible rolls, we're done
-        }
-
-        // Remove all accessible rolls from this iteration
-        for (row, col) in &rolls {
-            grid[*row][*col] = b'.';
-        }
-
-        total_removed += rolls.len();
+fn remove_once(grid: &[Vec<u8>], rows: usize, cols: usize) -> (Vec<Vec<u8>>, usize) {
+    let rolls = find_accessible_rolls(grid, rows, cols);
+    if rolls.is_empty() {
+        return (grid.to_vec(), 0);
     }
 
-    total_removed
+    let mut grid = grid.to_vec();
+    for (row, col) in &rolls {
+        grid[*row][*col] = b'.';
+    }
+
+    (grid, rolls.len())
 }
 
 fn find_accessible_rolls(grid: &[Vec<u8>], rows: usize, cols: usize) -> Vec<(usize, usize)> {
